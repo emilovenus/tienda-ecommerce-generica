@@ -1,7 +1,7 @@
 import os,sqlite3
 from flask import Flask, jsonify, request, session, send_from_directory
 from werkzeug.security import generate_password_hash,check_password_hash
-from database import get_db,init_db
+from backend.database import get_db,init_db
 app=Flask(__name__); app.secret_key=os.getenv("SECRET_KEY","change-this-secret")
 app.config.update(SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE="Lax")
 def user():
