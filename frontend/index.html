@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NovaStore | Tu tienda en línea</title>
+
+    <meta
+        name="description"
+        content="NovaStore - tienda e-commerce con productos de tecnología, ropa, accesorios y hogar."
+    >
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="site-header">
+
+        <div class="header-inner">
+
+            <button
+                class="brand"
+                onclick="show('catalog')"
+                aria-label="Ir al inicio"
+            >
+                <span class="brand-icon">✦</span>
+                <span>NOVA<span class="brand-light">STORE</span></span>
+            </button>
+
+            <nav class="main-nav">
+
+                <button onclick="show('catalog')">
+                    Inicio
+                </button>
+
+                <button onclick="scrollToProducts()">
+                    Productos
+                </button>
+
+                <button onclick="scrollToCategories()">
+                    Categorías
+                </button>
+
+                <button onclick="show('orders')">
+                    Mis pedidos
+                </button>
+
+            </nav>
+
+            <div class="header-actions">
+
+                <button
+                    class="icon-button"
+                    onclick="auth()"
+                    title="Mi cuenta"
+                >
+                    👤
+                </button>
+
+                <button
+                    class="cart-button"
+                    onclick="cartView()"
+                    title="Carrito"
+                >
+                    🛒
+                    <span id="count">0</span>
+                </button>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         CONTENIDO PRINCIPAL
+         ===================================================== -->
+
+    <main>
+
+        <!-- =================================================
+             CATÁLOGO
+             ================================================= -->
+
+        <section id="catalog">
+
+            <!-- HERO -->
+
+            <section class="hero">
+
+                <div class="hero-content">
+
+                    <span class="hero-label">
+                        NOVA COLLECTION
+                    </span>
+
+                    <h1>
+                        Todo lo que buscas.
+                        <span>En un solo lugar.</span>
+                    </h1>
+
+                    <p>
+                        Descubre productos seleccionados para tu día a día,
+                        con compras sencillas, seguras y rápidas.
+                    </p>
+
+                    <div class="hero-buttons">
+
+                        <button
+                            class="hero-primary"
+                            onclick="scrollToProducts()"
+                        >
+                            Explorar productos
+                            <span>→</span>
+                        </button>
+
+                        <button
+                            class="hero-secondary"
+                            onclick="scrollToCategories()"
+                        >
+                            Ver categorías
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="hero-decoration">
+                    <div class="hero-circle circle-one"></div>
+                    <div class="hero-circle circle-two"></div>
+                    <div class="hero-product">✦</div>
+                </div>
+
+            </section>
+
+
+            <!-- BENEFICIOS -->
+
+            <section class="benefits">
+
+                <div class="benefit">
+
+                    <div class="benefit-icon">
+                       
+                    </div>
+
+                    <div>
+                        <strong>Envíos rápidos</strong>
+                        <span>Compra desde cualquier lugar</span>
+                    </div>
+
+                </div>
+
+                <div class="benefit">
+
+                    <div class="benefit-icon">
+                        
+                    </div>
+
+                    <div>
+                        <strong>Compra segura</strong>
+                        <span>Protección para tus datos</span>
+                    </div>
+
+                </div>
+
+                <div class="benefit">
+
+                    <div class="benefit-icon">
+                        
+                    </div>
+
+                    <div>
+                        <strong>Productos seleccionados</strong>
+                        <span>Calidad para cada compra</span>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- CATEGORÍAS -->
+
+            <section
+                id="categories-section"
+                class="section-block"
+            >
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            EXPLORA
+                        </span>
+
+                        <h2>
+                            Compra por categoría
+                        </h2>
+
+                    </div>
+
+                    <p>
+                        Encuentra rápidamente lo que necesitas.
+                    </p>
+
+                </div>
+
+                <div
+                    id="categoryCards"
+                    class="category-grid"
+                ></div>
+
+            </section>
+
+
+            <!-- PRODUCTOS -->
+
+            <section
+                id="products-section"
+                class="section-block"
+            >
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            NUESTRA TIENDA
+                        </span>
+
+                        <h2>
+                            Productos destacados
+                        </h2>
+
+                    </div>
+
+                    <p>
+                        Descubre nuestra selección.
+                    </p>
+
+                </div>
+
+
+                <!-- BUSCADOR -->
+
+                <div class="catalog-tools">
+
+                    <div class="search-box">
+
+                        <span>⌕</span>
+
+                        <input
+                            id="search"
+                            type="search"
+                            placeholder="Buscar productos..."
+                            oninput="load()"
+                        >
+
+                    </div>
+
+                    <select
+                        id="cat"
+                        onchange="load()"
+                    >
+                        <option value="">
+                            Todas las categorías
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <!-- PRODUCTOS -->
+
+                <div
+                    id="products"
+                    class="product-grid"
+                ></div>
+
+                <div
+                    id="emptyProducts"
+                    class="empty-state hidden"
+                >
+                    <div>🔎</div>
+
+                    <h3>
+                        No encontramos productos
+                    </h3>
+
+                    <p>
+                        Intenta buscar otro producto o categoría.
+                    </p>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- =================================================
+             PEDIDOS
+             ================================================= -->
+
+        <section
+            id="orders"
+            class="hidden page-section"
+        >
+
+            <div class="page-header">
+
+                <span class="section-label">
+                    MI CUENTA
+                </span>
+
+                <h1>
+                    Mis pedidos
+                </h1>
+
+                <p>
+                    Consulta el estado y los productos de tus compras.
+                </p>
+
+            </div>
+
+            <div id="ordersList"></div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         MODAL
+         ===================================================== -->
+
+    <div
+        id="modal"
+        class="modal hidden"
+        onclick="modalBackground(event)"
+    >
+
+        <div
+            class="modal-box"
+            onclick="event.stopPropagation()"
+        >
+
+            <button
+                class="modal-close"
+                onclick="closeM()"
+                aria-label="Cerrar"
+            >
+                ×
+            </button>
+
+            <div id="content"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TOAST
+         ===================================================== -->
+
+    <div
+        id="toast"
+        class="toast"
+    ></div>
+
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <footer>
+
+        <div class="footer-content">
+
+            <div class="footer-brand">
+
+                <div class="footer-logo">
+                    ✦ NOVASTORE
+                </div>
+
+                <p>
+                    Una tienda e-commerce desarrollada
+                    como proyecto académico.
+                </p>
+
+            </div>
+
+            <div class="footer-column">
+
+                <h4>Tienda</h4>
+
+                <button onclick="show('catalog')">
+                    Inicio
+                </button>
+
+                <button onclick="scrollToProducts()">
+                    Productos
+                </button>
+
+                <button onclick="scrollToCategories()">
+                    Categorías
+                </button>
+
+            </div>
+
+            <div class="footer-column">
+
+                <h4>Cuenta</h4>
+
+                <button onclick="auth()">
+                    Iniciar sesión
+                </button>
+
+                <button onclick="show('orders')">
+                    Mis pedidos
+                </button>
+
+            </div>
+
+            <div class="footer-column">
+
+                <h4>Proyecto</h4>
+
+                <span>
+                    Flask
+                </span>
+
+                <span>
+                    SQLite
+                </span>
+
+                <span>
+                    Docker
+                </span>
+
+                <span>
+                    Nginx
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+
+            <span>
+                © 2026 NovaStore
+            </span>
+
+            <span>
+                Proyecto académico
+            </span>
+
+        </div>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
