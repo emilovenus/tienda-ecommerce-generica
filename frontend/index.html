@@ -53,27 +53,35 @@
 
             </nav>
 
-            <div class="header-actions">
+<div class="header-actions">
 
-                <button
-                    class="icon-button"
-                    onclick="auth()"
-                    title="Mi cuenta"
-                >
-                    👤
-                </button>
+    <button
+        class="balance-button"
+        onclick="bankView()"
+        title="Mi cuenta NovaBank"
+    >
+        💳
+        <span id="balanceDisplay">$0.00</span>
+    </button>
 
-                <button
-                    class="cart-button"
-                    onclick="cartView()"
-                    title="Carrito"
-                >
-                    🛒
-                    <span id="count">0</span>
-                </button>
+    <button
+        class="icon-button"
+        onclick="auth()"
+        title="Mi cuenta"
+    >
+        👤
+    </button>
 
-            </div>
+    <button
+        class="cart-button"
+        onclick="cartView()"
+        title="Carrito"
+    >
+        🛒
+        <span id="count">0</span>
+    </button>
 
+</div>
         </div>
 
     </header>

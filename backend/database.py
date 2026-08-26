@@ -1,6 +1,11 @@
+import os
 import sqlite3
 from pathlib import Path
-DB=Path("/app/data/store.db")
+
+DB = Path(os.getenv(
+    "DB_PATH",
+    str(Path(__file__).resolve().parent / "data" / "store.db")
+))
 def get_db():
     DB.parent.mkdir(parents=True,exist_ok=True)
     c=sqlite3.connect(DB); c.row_factory=sqlite3.Row; c.execute("PRAGMA foreign_keys=ON"); return c
@@ -11,6 +16,30 @@ def init_db():
     CREATE TABLE IF NOT EXISTS products(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,description TEXT DEFAULT '',price REAL NOT NULL,category TEXT NOT NULL,stock INTEGER NOT NULL DEFAULT 0,image TEXT DEFAULT '',active INTEGER DEFAULT 1);
     CREATE TABLE IF NOT EXISTS orders(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,total REAL NOT NULL,status TEXT DEFAULT 'pending',created_at TEXT DEFAULT CURRENT_TIMESTAMP,FOREIGN KEY(user_id) REFERENCES users(id));
     CREATE TABLE IF NOT EXISTS order_items(id INTEGER PRIMARY KEY AUTOINCREMENT,order_id INTEGER NOT NULL,product_id INTEGER NOT NULL,quantity INTEGER NOT NULL,price REAL NOT NULL,FOREIGN KEY(order_id) REFERENCES orders(id),FOREIGN KEY(product_id) REFERENCES products(id));
+    """)
+    c.executescript("""
+        CREATE TABLE IF NOT EXISTS accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL UNIQUE,
+            account_number TEXT NOT NULL UNIQUE,
+            balance REAL NOT NULL DEFAULT 5000.00,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL,
+            order_id INTEGER,
+            type TEXT NOT NULL,
+            amount REAL NOT NULL,
+            balance_before REAL NOT NULL,
+            balance_after REAL NOT NULL,
+            description TEXT DEFAULT '',
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (account_id) REFERENCES accounts(id),
+            FOREIGN KEY (order_id) REFERENCES orders(id)
+        );
     """)
     if c.execute("SELECT COUNT(*) FROM products").fetchone()[0]==0:
         c.executemany("INSERT INTO products(name,description,price,category,stock,image) VALUES(?,?,?,?,?,?)",[

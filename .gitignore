@@ -1,15 +1,26 @@
-.env
-.env.*
-!.env.example
-
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-node_modules/
-dist/
-build/
+# Entornos
+venv/
+.venv/
+env/
 
-.vscode/
-.idea/
+# Bases de datos locales
+*.db
+*.sqlite
+*.sqlite3
 
+# Variables de entorno
+.env
+.env.*
+
+# Respaldos
+*.backup
+*.backup.py
+
+# Sistema
 .DS_Store

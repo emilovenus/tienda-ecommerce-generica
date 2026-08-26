@@ -650,37 +650,236 @@ async function checkout() {
 
     try {
 
+        // Mostrar que el pago está siendo procesado
+        modal(`
+            <div style="text-align:center; padding:20px;">
+
+                <div style="font-size:42px;">
+                    💳
+                </div>
+
+                <h2>
+                    Procesando pago
+                </h2>
+
+                <p style="color:#667085;">
+                    Conectando con NovaBank...
+                </p>
+
+                <div
+                    style="
+                        margin:25px auto;
+                        width:40px;
+                        height:40px;
+                        border:4px solid #e5e7eb;
+                        border-top-color:#111827;
+                        border-radius:50%;
+                        animation:spin 1s linear infinite;
+                    "
+                ></div>
+
+            </div>
+        `);
+
+        // Enviar compra al backend
         const data = await api(
             "/orders",
             {
                 method: "POST",
+
                 body: JSON.stringify({
                     items: cart
                 })
             }
         );
 
+        // Guardar datos antes de vaciar el carrito
+        const totalPaid = Number(data.total || 0);
+        const balanceBefore = Number(data.balance_before || 0);
+        const balanceAfter = Number(data.balance_after || 0);
+
+        // Vaciar carrito
         cart = [];
 
         save();
 
-        closeM();
+        // Actualizar saldo mostrado arriba
+        if ($("balanceDisplay")) {
 
-        toast(
-            `Pedido #${data.order_id} creado correctamente`
-        );
+            $("balanceDisplay").textContent =
+                money(balanceAfter);
 
-        setTimeout(() => {
-            show("orders");
-        }, 800);
+        }
+
+        // Mostrar confirmación bancaria
+        modal(`
+            <div style="text-align:center; padding:10px;">
+
+                <div
+                    style="
+                        font-size:52px;
+                        margin-bottom:10px;
+                    "
+                >
+                    ✅
+                </div>
+
+                <h2>
+                    ¡Pago aprobado!
+                </h2>
+
+                <p
+                    style="
+                        color:#667085;
+                        margin-bottom:25px;
+                    "
+                >
+                    Tu compra fue procesada correctamente
+                    mediante NovaBank.
+                </p>
+
+                <div
+                    style="
+                        background:#f5f7fa;
+                        border-radius:16px;
+                        padding:20px;
+                        text-align:left;
+                    "
+                >
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:space-between;
+                            margin-bottom:12px;
+                        "
+                    >
+                        <span>
+                            Pedido
+                        </span>
+
+                        <strong>
+                            #${data.order_id}
+                        </strong>
+                    </div>
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:space-between;
+                            margin-bottom:12px;
+                        "
+                    >
+                        <span>
+                            Total pagado
+                        </span>
+
+                        <strong>
+                            ${money(totalPaid)}
+                        </strong>
+                    </div>
+
+                    <hr
+                        style="
+                            border:0;
+                            border-top:1px solid #e5e7eb;
+                            margin:15px 0;
+                        "
+                    >
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:space-between;
+                            margin-bottom:8px;
+                        "
+                    >
+                        <span>
+                            Saldo anterior
+                        </span>
+
+                        <span>
+                            ${money(balanceBefore)}
+                        </span>
+                    </div>
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:space-between;
+                        "
+                    >
+                        <strong>
+                            Saldo disponible
+                        </strong>
+
+                        <strong
+                            style="
+                                font-size:20px;
+                            "
+                        >
+                            ${money(balanceAfter)}
+                        </strong>
+                    </div>
+
+                </div>
+
+                <div
+                    style="
+                        margin-top:20px;
+                        color:#667085;
+                        font-size:12px;
+                    "
+                >
+                    💳 Cuenta NovaBank
+                </div>
+
+                <button
+                    class="modal-primary"
+                    onclick="closeM(); show('orders')"
+                    style="margin-top:20px;"
+                >
+                    Ver mi pedido
+                </button>
+
+            </div>
+        `);
 
     } catch (error) {
 
-        toast(error.message);
+        // Si el pago fue rechazado
+        modal(`
+            <div style="text-align:center; padding:15px;">
+
+                <div style="font-size:48px;">
+                    ❌
+                </div>
+
+                <h2>
+                    Pago rechazado
+                </h2>
+
+                <p
+                    style="
+                        color:#667085;
+                        margin:15px 0 25px;
+                    "
+                >
+                    ${escapeHTML(error.message)}
+                </p>
+
+                <button
+                    class="modal-primary"
+                    onclick="closeM()"
+                >
+                    Regresar al carrito
+                </button>
+
+            </div>
+        `);
 
     }
 }
-
 
 /* =========================================================
    PEDIDOS
@@ -821,7 +1020,349 @@ async function orders() {
    AUTENTICACIÓN
    ========================================================= */
 
-function auth() {
+async function loadBankAccount() {
+
+    try {
+
+        const data = await api("/bank");
+
+        const balance =
+            Number(data.balance || 0);
+
+        if ($("balanceDisplay")) {
+            $("balanceDisplay").textContent =
+                money(balance);
+        }
+
+    } catch (error) {
+
+        if ($("balanceDisplay")) {
+            $("balanceDisplay").textContent =
+                "$0.00";
+        }
+
+    }
+}
+
+
+async function bankView() {
+
+    try {
+
+        const data = await api("/bank");
+
+        modal(`
+            <h2>💳 Mi cuenta NovaBank</h2>
+
+            <div
+                style="
+                    background:#f5f7fa;
+                    border-radius:16px;
+                    padding:25px;
+                    margin:20px 0;
+                    text-align:center;
+                "
+            >
+
+                <div
+                    style="
+                        color:#667085;
+                        font-size:13px;
+                    "
+                >
+                    Saldo disponible
+                </div>
+
+                <div
+                    style="
+                        font-size:36px;
+                        font-weight:700;
+                        margin:8px 0;
+                    "
+                >
+                    ${money(data.balance)}
+                </div>
+
+                <div
+                    style="
+                        color:#667085;
+                        font-size:13px;
+                    "
+                >
+                    Cuenta ${escapeHTML(data.account_number)}
+                </div>
+
+            </div>
+
+            <button
+                class="modal-primary"
+                onclick="closeM()"
+            >
+                Cerrar
+            </button>
+        `);
+
+    } catch (error) {
+
+        toast("Inicia sesión para consultar tu cuenta");
+
+    }
+}
+async function auth() {
+
+    try {
+
+        const data = await api("/auth/me");
+
+        if (data.user) {
+
+            const bank = await api("/bank");
+            const ordersData = await api("/orders");
+
+            const ordersList = ordersData.orders || [];
+
+            let purchasesHTML = "";
+
+            if (!ordersList.length) {
+
+                purchasesHTML = `
+                    <div
+                        style="
+                            padding:20px;
+                            text-align:center;
+                            color:#667085;
+                        "
+                    >
+                        🛍️ Todavía no tienes compras.
+                    </div>
+                `;
+
+            } else {
+
+                purchasesHTML = ordersList.map(order => {
+
+                    const items = order.items || [];
+
+                    return `
+                        <div
+                            style="
+                                border:1px solid #e5e7eb;
+                                border-radius:14px;
+                                padding:18px;
+                                margin-top:12px;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    display:flex;
+                                    justify-content:space-between;
+                                    align-items:center;
+                                "
+                            >
+
+                                <strong>
+                                    Pedido #${order.id}
+                                </strong>
+
+                                <span
+                                    style="
+                                        font-size:12px;
+                                        padding:5px 9px;
+                                        border-radius:20px;
+                                        background:#e8f7ee;
+                                        color:#16834a;
+                                    "
+                                >
+                                    ${translateStatus(order.status)}
+                                </span>
+
+                            </div>
+
+                            <div
+                                style="
+                                    color:#667085;
+                                    font-size:12px;
+                                    margin-top:5px;
+                                "
+                            >
+                                ${formatDate(order.created_at)}
+                            </div>
+
+                            <div
+                                style="
+                                    margin-top:15px;
+                                "
+                            >
+
+                                ${items.map(item => `
+                                    <div
+                                        style="
+                                            display:flex;
+                                            justify-content:space-between;
+                                            margin-bottom:8px;
+                                        "
+                                    >
+
+                                        <span>
+                                            ${item.quantity}
+                                            ×
+                                            ${escapeHTML(item.name)}
+                                        </span>
+
+                                        <strong>
+                                            ${money(
+                                                Number(item.price) *
+                                                Number(item.quantity)
+                                            )}
+                                        </strong>
+
+                                    </div>
+                                `).join("")}
+
+                            </div>
+
+                            <div
+                                style="
+                                    border-top:1px solid #e5e7eb;
+                                    margin-top:15px;
+                                    padding-top:12px;
+                                    display:flex;
+                                    justify-content:space-between;
+                                "
+                            >
+
+                                <strong>
+                                    Total
+                                </strong>
+
+                                <strong>
+                                    ${money(order.total)}
+                                </strong>
+
+                            </div>
+
+                        </div>
+                    `;
+
+                }).join("");
+            }
+
+            modal(`
+
+                <h2>
+                    👤 Mi cuenta
+                </h2>
+
+                <div
+                    style="
+                        color:#667085;
+                        margin-bottom:20px;
+                    "
+                >
+                    ${escapeHTML(data.user.email)}
+                </div>
+
+
+                <!-- NOVABANK -->
+
+                <div
+                    style="
+                        background:#f5f7fa;
+                        border-radius:16px;
+                        padding:22px;
+                        margin-bottom:25px;
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:13px;
+                            color:#667085;
+                        "
+                    >
+                        💳 NOVABANK
+                    </div>
+
+                    <div
+                        style="
+                            font-size:13px;
+                            color:#667085;
+                            margin-top:12px;
+                        "
+                    >
+                        Saldo disponible
+                    </div>
+
+                    <strong
+                        style="
+                            display:block;
+                            font-size:32px;
+                            margin:5px 0 12px;
+                        "
+                    >
+                        ${money(bank.balance)}
+                    </strong>
+
+                    <div
+                        style="
+                            font-size:12px;
+                            color:#667085;
+                        "
+                    >
+                        Cuenta:
+                        ${escapeHTML(bank.account_number)}
+                    </div>
+
+                </div>
+
+
+                <!-- COMPRAS -->
+
+                <h3>
+                    🛍️ Mis compras
+                </h3>
+
+                <div
+                    style="
+                        max-height:350px;
+                        overflow-y:auto;
+                    "
+                >
+
+                    ${purchasesHTML}
+
+                </div>
+
+
+                <button
+                    class="modal-primary"
+                    onclick="closeM()"
+                    style="margin-top:20px;"
+                >
+                    Cerrar
+                </button>
+
+
+                <button
+                    class="modal-secondary"
+                    onclick="logout()"
+                >
+                    Cerrar sesión
+                </button>
+
+            `);
+
+            return;
+        }
+
+    } catch (error) {
+
+        // No hay sesión activa.
+    }
+
+
+    // FORMULARIO DE LOGIN / REGISTRO
 
     modal(`
         <h2>Mi cuenta</h2>
@@ -890,11 +1431,8 @@ function auth() {
         >
             Iniciar sesión
         </button>
-
     `);
 }
-
-
 async function reg() {
 
     const name =
@@ -922,12 +1460,13 @@ async function reg() {
                 }
             );
 
-        closeM();
+closeM();
 
-        toast(
-            `Bienvenido/a ${data.user.name}`
-        );
+await loadBankAccount();
 
+toast(
+    `Bienvenido/a ${data.user.name}`
+);
     } catch (error) {
 
         toast(error.message);
@@ -959,11 +1498,37 @@ async function log() {
                 }
             );
 
+closeM();
+
+await loadBankAccount();
+
+toast(
+    `Bienvenido/a ${data.user.name}`
+);
+    } catch (error) {
+
+        toast(error.message);
+
+    }
+}
+async function logout() {
+
+    try {
+
+        await api(
+            "/auth/logout",
+            {
+                method: "POST"
+            }
+        );
+
+        if ($("balanceDisplay")) {
+            $("balanceDisplay").textContent = "$0.00";
+        }
+
         closeM();
 
-        toast(
-            `Bienvenido/a ${data.user.name}`
-        );
+        toast("Sesión cerrada");
 
     } catch (error) {
 
@@ -971,7 +1536,6 @@ async function log() {
 
     }
 }
-
 
 /* =========================================================
    MODALES
@@ -1027,17 +1591,21 @@ function safeImage(image) {
         return "/images/placeholder.jpg";
     }
 
+    image = String(image).trim();
+
     if (
-        image.startsWith("/images/") ||
-        image.startsWith("https://") ||
-        image.startsWith("http://")
+        image.startsWith("http://") ||
+        image.startsWith("https://")
     ) {
         return image;
     }
 
-    return "/images/placeholder.jpg";
-}
+    if (image.startsWith("/")) {
+        return image;
+    }
 
+    return "/" + image;
+}
 
 function translateStatus(status) {
 

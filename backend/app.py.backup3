@@ -1,5 +1,5 @@
 import os,sqlite3
-from flask import Flask, jsonify, request, session, send_from_directory
+from flask import Flask,jsonify,request,session
 from werkzeug.security import generate_password_hash,check_password_hash
 from database import get_db,init_db
 app=Flask(__name__); app.secret_key=os.getenv("SECRET_KEY","change-this-secret")
@@ -17,70 +17,14 @@ def auth():
 def health():return jsonify(status="ok",service="ecommerce")
 @app.post("/api/auth/register")
 def register():
-    d = request.get_json() or {}
-
-    name = d.get("name", "").strip()
-    email = d.get("email", "").strip().lower()
-    pw = d.get("password", "")
-
-    if not name or not email or len(pw) < 8:
-        return jsonify(
-            error="Datos inválidos; contraseña mínima de 8 caracteres"
-        ), 400
-
-    c = get_db()
-
+    d=request.get_json() or {}; name=d.get("name","").strip(); email=d.get("email","").strip().lower(); pw=d.get("password","")
+    if not name or not email or len(pw)<8:return jsonify(error="Datos inválidos; contraseña mínima de 8 caracteres"),400
+    c=get_db()
     try:
-        # Crear usuario
-        cur = c.execute(
-            """
-            INSERT INTO users(name,email,password_hash)
-            VALUES(?,?,?)
-            """,
-            (name, email, generate_password_hash(pw))
-        )
-
-        user_id = cur.lastrowid
-
-        # Crear cuenta NovaBank automáticamente
-        account_number = f"4582{user_id:08d}"
-        initial_balance = 5000.00
-
-        c.execute(
-            """
-            INSERT INTO accounts(
-                user_id,
-                account_number,
-                balance
-            )
-            VALUES(?,?,?)
-            """,
-            (
-                user_id,
-                account_number,
-                initial_balance
-            )
-        )
-
-        c.commit()
-
-        session["uid"] = user_id
-
-        return jsonify(
-            message="Usuario registrado",
-            user=user(),
-            bank={
-                "bank": "NovaBank",
-                "account_number": account_number,
-                "balance": initial_balance
-            }
-        ), 201
-
-    except sqlite3.IntegrityError:
-        return jsonify(error="El correo ya está registrado"), 409
-
-    finally:
-        c.close()
+        cur=c.execute("INSERT INTO users(name,email,password_hash) VALUES(?,?,?)",(name,email,generate_password_hash(pw))); c.commit(); session["uid"]=cur.lastrowid
+        return jsonify(message="Usuario registrado",user=user()),201
+    except sqlite3.IntegrityError:return jsonify(error="El correo ya está registrado"),409
+    finally:c.close()
 @app.post("/api/auth/login")
 def login():
     d=request.get_json() or {}; c=get_db(); r=c.execute("SELECT * FROM users WHERE email=?",(d.get("email","").lower(),)).fetchone(); c.close()
@@ -90,29 +34,6 @@ def login():
 def logout():session.clear(); return jsonify(message="Sesión cerrada")
 @app.get("/api/auth/me")
 def me():return jsonify(user=user())
-@app.get("/api/bank")
-def bank():
-    u, e = auth()
-
-    if e:
-        return e
-
-    c = get_db()
-
-    r = c.execute(
-        "SELECT account_number, balance FROM accounts WHERE user_id=?",
-        (u["id"],)
-    ).fetchone()
-
-    c.close()
-
-    if not r:
-        return jsonify(error="Cuenta NovaBank no encontrada"), 404
-
-    return jsonify(
-        account_number=r["account_number"],
-        balance=float(r["balance"])
-    )
 @app.get("/api/products")
 def products():
     q=request.args.get("search",""); cat=request.args.get("category",""); c=get_db()
@@ -271,19 +192,5 @@ def create_product():
     d=request.get_json() or {}; c=get_db()
     cur=c.execute("INSERT INTO products(name,description,price,category,stock,image) VALUES(?,?,?,?,?,?)",(d["name"],d.get("description",""),float(d["price"]),d["category"],int(d["stock"]),d.get("image","")));c.commit()
     r=c.execute("SELECT * FROM products WHERE id=?",(cur.lastrowid,)).fetchone();c.close();return jsonify(product=dict(r)),201
-FRONTEND_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "frontend"
-)
-
-@app.get("/")
-def frontend_index():
-    return send_from_directory(FRONTEND_DIR, "index.html")
-
-
-@app.get("/<path:filename>")
-def frontend_files(filename):
-    return send_from_directory(FRONTEND_DIR, filename)
 if __name__=="__main__":init_db();app.run("0.0.0.0",5000)
 else:init_db()
-
